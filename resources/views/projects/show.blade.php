@@ -36,12 +36,17 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-lg text-gray-800 mb-4">{{ __('Issues') }}</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-lg text-gray-800">{{ __('Issues') }}</h3>
+                    <a href="{{ route('issues.create', ['project_id' => $project->id]) }}"
+                       class="text-sm text-indigo-600 hover:underline">{{ __('+ New issue') }}</a>
+                </div>
 
                 @forelse ($issues as $issue)
                     <div class="flex items-center justify-between border-b border-gray-100 py-3 last:border-0">
                         <div>
-                            <span class="font-medium text-gray-900">{{ $issue->title }}</span>
+                            <a href="{{ route('issues.show', $issue) }}"
+                               class="font-medium text-indigo-600 hover:underline">{{ $issue->title }}</a>
                             <div class="mt-1 flex flex-wrap gap-1">
                                 @foreach ($issue->tags as $tag)
                                     @include('partials.tag-badge', ['tag' => $tag])
