@@ -94,15 +94,49 @@
                 </div>
             </div>
 
-            {{-- Comments (static for now; AJAX paginated load + create added in section 6) --}}
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-3">{{ __('Comments') }}</h3>
+            {{-- Comments (AJAX: paginated load-more + create via Alpine + fetch) --}}
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
+                 x-data="issueComments({ issueId: {{ $issue->id }} })" x-init="load()">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-800">{{ __('Comments') }}</h3>
+                    <span class="text-xs text-gray-400" x-text="`${total} total`"></span>
+                </div>
+
+                {{-- New comment form --}}
+                <form @submit.prevent="submit()" class="mb-4 space-y-3">
+                    <div>
+                        <x-input-label for="author_name" :value="__('Your name')" />
+                        <x-text-input id="author_name" type="text" class="mt-1 block w-full"
+                                      x-model="form.author_name" />
+                        <p x-show="errors.author_name" x-text="errors.author_name?.[0]"
+                           class="mt-1 text-sm text-red-600"></p>
+                    </div>
+                    <div>
+                        <x-input-label for="body" :value="__('Comment')" />
+                        <textarea id="body" rows="3" x-model="form.body"
+                                  class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"></textarea>
+                        <p x-show="errors.body" x-text="errors.body?.[0]"
+                           class="mt-1 text-sm text-red-600"></p>
+                    </div>
+                    <x-primary-button type="submit" ::disabled="busy">{{ __('Post comment') }}</x-primary-button>
+                </form>
+
+                {{-- Comment list (HTML rendered server-side, injected here) --}}
                 <div class="space-y-3">
-                    @forelse ($issue->comments as $comment)
-                        @include('partials.comment-item', ['comment' => $comment])
-                    @empty
-                        <span class="text-sm text-gray-500">{{ __('No comments yet.') }}</span>
-                    @endforelse
+                    <template x-for="(html, i) in items" :key="i">
+                        <div x-html="html"></div>
+                    </template>
+                    <p x-show="!loading && items.length === 0" class="text-sm text-gray-500">
+                        {{ __('No comments yet.') }}
+                    </p>
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" x-show="hasMore" @click="load()" :disabled="loading"
+                            class="text-sm text-indigo-600 hover:underline disabled:opacity-50">
+                        <span x-show="!loading">{{ __('Load more') }}</span>
+                        <span x-show="loading">{{ __('Loading…') }}</span>
+                    </button>
                 </div>
             </div>
         </div>

@@ -90,6 +90,59 @@ Alpine.data('issueTags', ({ issueId, tags, allTags }) => ({
     },
 }));
 
+/**
+ * Comments for an issue: paginated "load more" plus AJAX create that prepends
+ * the new comment and clears the form. Comment markup is rendered server-side
+ * (shared Blade partial) and injected as HTML, so there is no duplicated template.
+ */
+Alpine.data('issueComments', ({ issueId }) => ({
+    issueId,
+    items: [],
+    page: 0,
+    hasMore: false,
+    total: 0,
+    loading: false,
+    busy: false,
+    form: { author_name: '', body: '' },
+    errors: {},
+
+    async load() {
+        if (this.loading) return;
+        this.loading = true;
+        try {
+            const next = this.page + 1;
+            const { html, meta } = await apiFetch(`/issues/${this.issueId}/comments?page=${next}`);
+            this.items.push(...html);
+            this.page = meta.current_page;
+            this.hasMore = meta.has_more;
+            this.total = meta.total;
+        } catch (e) {
+            // Leave the list as-is on failure; nothing destructive happened.
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async submit() {
+        if (this.busy) return;
+        this.busy = true;
+        this.errors = {};
+        try {
+            const { html, total } = await apiFetch(`/issues/${this.issueId}/comments`, {
+                method: 'POST',
+                body: { ...this.form },
+            });
+            this.items.unshift(html);   // prepend newest
+            this.total = total;
+            this.form = { author_name: '', body: '' };   // clear the form
+        } catch (e) {
+            this.errors = e.validation ?? {};
+        } finally {
+            this.busy = false;
+        }
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();
