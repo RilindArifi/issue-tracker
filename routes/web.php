@@ -3,6 +3,7 @@
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,6 +21,14 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('projects', ProjectController::class);
     Route::resource('issues', IssueController::class);
+
+    // Tags
+    Route::get('tags', [TagController::class, 'index'])->name('tags.index');
+    Route::post('tags', [TagController::class, 'store'])->name('tags.store');
+
+    // Tag attach/detach on an issue (AJAX)
+    Route::post('issues/{issue}/tags', [TagController::class, 'attach'])->name('issues.tags.attach');
+    Route::delete('issues/{issue}/tags/{tag}', [TagController::class, 'detach'])->name('issues.tags.detach');
 });
 
 require __DIR__.'/auth.php';

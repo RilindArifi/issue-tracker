@@ -41,16 +41,43 @@
                 @endif
             </div>
 
-            {{-- Tags (static for now; AJAX attach/detach added in section 5) --}}
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            {{-- Tags (AJAX attach/detach via Alpine + fetch) --}}
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
+                 x-data="issueTags({
+                     issueId: {{ $issue->id }},
+                     tags: {{ Js::from($issue->tags->map->only(['id', 'name', 'color'])) }},
+                     allTags: {{ Js::from($allTags->map->only(['id', 'name', 'color'])) }},
+                 })">
                 <h3 class="font-semibold text-gray-800 mb-3">{{ __('Tags') }}</h3>
-                <div class="flex flex-wrap gap-2">
-                    @forelse ($issue->tags as $tag)
-                        @include('partials.tag-badge', ['tag' => $tag])
-                    @empty
-                        <span class="text-sm text-gray-500">{{ __('No tags.') }}</span>
-                    @endforelse
+
+                <div class="flex flex-wrap gap-2 min-h-[1.5rem]">
+                    <template x-for="tag in tags" :key="tag.id">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                              :style="`background-color: ${tag.color ? tag.color + '22' : '#e5e7eb'}; color: ${tag.color || '#374151'};`">
+                            <span x-text="tag.name"></span>
+                            <button type="button" @click="detach(tag)" :disabled="busy"
+                                    class="ml-1 text-current/70 hover:text-current" aria-label="Remove tag">&times;</button>
+                        </span>
+                    </template>
+                    <span x-show="tags.length === 0" class="text-sm text-gray-500">{{ __('No tags.') }}</span>
                 </div>
+
+                {{-- Attach control --}}
+                <div class="mt-4 flex items-center gap-2">
+                    <select x-model="selected" :disabled="busy || availableTags.length === 0"
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                        <option value="">{{ __('Add a tag…') }}</option>
+                        <template x-for="tag in availableTags" :key="tag.id">
+                            <option :value="tag.id" x-text="tag.name"></option>
+                        </template>
+                    </select>
+                    <button type="button" @click="attach()" :disabled="busy || !selected"
+                            class="inline-flex items-center px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-md hover:bg-gray-700 disabled:opacity-50">
+                        {{ __('Add') }}
+                    </button>
+                </div>
+
+                <p x-show="error" x-text="error" class="mt-2 text-sm text-red-600"></p>
             </div>
 
             {{-- Members (static for now; AJAX assignment added in section 7) --}}
