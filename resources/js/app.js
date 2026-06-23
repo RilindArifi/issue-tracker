@@ -143,6 +143,58 @@ Alpine.data('issueComments', ({ issueId }) => ({
     },
 }));
 
+/**
+ * Member assignment on an issue (bonus). Mirrors issueTags: attach/detach
+ * users via AJAX, keep the list in sync, no page reload.
+ */
+Alpine.data('issueMembers', ({ issueId, members, allUsers }) => ({
+    issueId,
+    members,
+    allUsers,
+    selected: '',
+    busy: false,
+    error: '',
+
+    get availableUsers() {
+        const assigned = new Set(this.members.map((m) => m.id));
+        return this.allUsers.filter((u) => !assigned.has(u.id));
+    },
+
+    async attach() {
+        if (!this.selected || this.busy) return;
+        this.busy = true;
+        this.error = '';
+        try {
+            const { data } = await apiFetch(`/issues/${this.issueId}/members`, {
+                method: 'POST',
+                body: { user_id: Number(this.selected) },
+            });
+            this.members = data;
+            this.selected = '';
+        } catch (e) {
+            this.error = e.validation?.user_id?.[0] ?? e.message;
+        } finally {
+            this.busy = false;
+        }
+    },
+
+    async detach(member) {
+        if (this.busy) return;
+        this.busy = true;
+        this.error = '';
+        try {
+            const { data } = await apiFetch(`/issues/${this.issueId}/members/${member.id}`, {
+                method: 'DELETE',
+            });
+            this.members = data;
+        } catch (e) {
+            this.error = e.message;
+        } finally {
+            this.busy = false;
+        }
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();

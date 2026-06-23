@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TagController;
@@ -34,6 +35,10 @@ Route::middleware('auth')->group(function () {
     // Comments on an issue (AJAX)
     Route::get('issues/{issue}/comments', [CommentController::class, 'index'])->name('issues.comments.index');
     Route::post('issues/{issue}/comments', [CommentController::class, 'store'])->name('issues.comments.store');
+
+    // Member assignment on an issue (AJAX)
+    Route::post('issues/{issue}/members', [MemberController::class, 'attach'])->name('issues.members.attach');
+    Route::delete('issues/{issue}/members/{user}', [MemberController::class, 'detach'])->name('issues.members.detach');
 });
 
 require __DIR__.'/auth.php';

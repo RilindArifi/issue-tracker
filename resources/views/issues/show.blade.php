@@ -80,18 +80,41 @@
                 <p x-show="error" x-text="error" class="mt-2 text-sm text-red-600"></p>
             </div>
 
-            {{-- Members (static for now; AJAX assignment added in section 7) --}}
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            {{-- Members (AJAX assignment via Alpine + fetch) --}}
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6"
+                 x-data="issueMembers({
+                     issueId: {{ $issue->id }},
+                     members: {{ Js::from($issue->members->map->only(['id', 'name'])) }},
+                     allUsers: {{ Js::from($allUsers->map->only(['id', 'name'])) }},
+                 })">
                 <h3 class="font-semibold text-gray-800 mb-3">{{ __('Members') }}</h3>
-                <div class="flex flex-wrap gap-2">
-                    @forelse ($issue->members as $member)
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                            {{ $member->name }}
+
+                <div class="flex flex-wrap gap-2 min-h-[1.5rem]">
+                    <template x-for="member in members" :key="member.id">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            <span x-text="member.name"></span>
+                            <button type="button" @click="detach(member)" :disabled="busy"
+                                    class="ml-1 text-gray-500 hover:text-gray-800" aria-label="Remove member">&times;</button>
                         </span>
-                    @empty
-                        <span class="text-sm text-gray-500">{{ __('No members assigned.') }}</span>
-                    @endforelse
+                    </template>
+                    <span x-show="members.length === 0" class="text-sm text-gray-500">{{ __('No members assigned.') }}</span>
                 </div>
+
+                <div class="mt-4 flex items-center gap-2">
+                    <select x-model="selected" :disabled="busy || availableUsers.length === 0"
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                        <option value="">{{ __('Assign a user…') }}</option>
+                        <template x-for="user in availableUsers" :key="user.id">
+                            <option :value="user.id" x-text="user.name"></option>
+                        </template>
+                    </select>
+                    <button type="button" @click="attach()" :disabled="busy || !selected"
+                            class="inline-flex items-center px-3 py-1.5 bg-gray-800 text-white text-xs font-semibold rounded-md hover:bg-gray-700 disabled:opacity-50">
+                        {{ __('Assign') }}
+                    </button>
+                </div>
+
+                <p x-show="error" x-text="error" class="mt-2 text-sm text-red-600"></p>
             </div>
 
             {{-- Comments (AJAX: paginated load-more + create via Alpine + fetch) --}}
