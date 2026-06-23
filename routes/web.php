@@ -22,6 +22,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('projects', ProjectController::class);
+
+    // AJAX live search/filter (declared before the resource so it is not
+    // captured by issues/{issue}).
+    Route::get('issues/search', [IssueController::class, 'search'])->name('issues.search');
     Route::resource('issues', IssueController::class);
 
     // Tags

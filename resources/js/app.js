@@ -195,6 +195,50 @@ Alpine.data('issueMembers', ({ issueId, members, allUsers }) => ({
     },
 }));
 
+/**
+ * Live issues search/filter (bonus). Debounced text search plus status/priority/
+ * tag selects, all driving an AJAX fetch that swaps the list without a reload.
+ * Rows are rendered server-side (shared partial). The URL is kept in sync so the
+ * current view is shareable.
+ */
+Alpine.data('issueSearch', ({ filters }) => ({
+    filters,
+    items: [],
+    total: 0,
+    loading: false,
+    touched: false,   // false until the first interaction, so the SSR list shows initially
+
+    queryString() {
+        const params = new URLSearchParams();
+        Object.entries(this.filters).forEach(([key, value]) => {
+            if (value !== '' && value !== null) params.set(key, value);
+        });
+        return params.toString();
+    },
+
+    async fetchIssues() {
+        this.touched = true;
+        this.loading = true;
+        const qs = this.queryString();
+        try {
+            const { html, meta } = await apiFetch(`/issues/search${qs ? '?' + qs : ''}`);
+            this.items = html;
+            this.total = meta.total;
+            // Keep the address bar in sync with the active filters.
+            window.history.replaceState({}, '', `/issues${qs ? '?' + qs : ''}`);
+        } catch (e) {
+            // Non-destructive: keep the current list on failure.
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    reset() {
+        this.filters = { search: '', status: '', priority: '', tag: '' };
+        this.fetchIssues();
+    },
+}));
+
 window.Alpine = Alpine;
 
 Alpine.start();

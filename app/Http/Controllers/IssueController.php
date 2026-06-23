@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateIssueRequest;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Tag;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -39,6 +40,35 @@ class IssueController extends Controller
             'statuses' => IssueStatus::options(),
             'priorities' => IssuePriority::options(),
             'filters' => $request->only(['status', 'priority', 'tag', 'search']),
+        ]);
+    }
+
+    /**
+     * AJAX search/filter for the issues index. Returns rows rendered with the
+     * shared partial plus pagination metadata, so the live list reuses the same
+     * markup as the server-rendered page.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $issues = Issue::query()
+            ->with(['project', 'tags'])
+            ->status($request->query('status'))
+            ->priority($request->query('priority'))
+            ->tag($request->query('tag'))
+            ->search($request->query('search'))
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return response()->json([
+            'html' => $issues->map(fn (Issue $issue) => view('partials.issue-row', [
+                'issue' => $issue,
+            ])->render())->all(),
+            'meta' => [
+                'total' => $issues->total(),
+                'current_page' => $issues->currentPage(),
+                'last_page' => $issues->lastPage(),
+            ],
         ]);
     }
 
