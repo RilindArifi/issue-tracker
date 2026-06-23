@@ -102,12 +102,15 @@ php artisan serve      # or use Laravel Herd / Valet
 
 ### Demo accounts
 
-The seeder creates two users (password is `password` for both):
+The seeder creates two users. The password for both is `password`:
 
-| Email                | Role                |
-| -------------------- | ------------------- |
-| `test@example.com`   | Owner of 3 projects |
-| `jane@example.com`   | Teammate            |
+| Email                | Password   | Role                |
+| -------------------- | ---------- | ------------------- |
+| `test@example.com`   | `password` | Owner of 3 projects |
+| `jane@example.com`   | `password` | Teammate            |
+
+> The password is set by `UserFactory` (`Hash::make('password')`), so it applies
+> to every seeded user.
 
 The seed data includes 8 tags and 3 projects fully populated with issues, tags, members
 and comments.
